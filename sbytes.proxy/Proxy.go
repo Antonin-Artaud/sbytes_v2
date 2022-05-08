@@ -5,15 +5,6 @@ import (
 	"log"
 )
 
-type ScanQrCodeRequest struct {
-	FireBaseId string `json:"fireBaseId" binding:"required"`
-	Url        string `json:"url" binding:"required"`
-	Credential struct {
-		Id       string `json:"id" binding:"required"`
-		Password string `json:"password" binding:"required"`
-	} `json:"credential" binding:"required"`
-}
-
 type iProxy interface {
 	handleAuthRequest(ctx *gin.RouterGroup)
 }
