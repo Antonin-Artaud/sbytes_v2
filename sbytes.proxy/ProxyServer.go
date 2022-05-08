@@ -19,7 +19,11 @@ func main() {
 
 	err := r.Run(port)
 
+	handleError(err, "Somethings went wrong when the server has started...")
+}
+
+func handleError(err error, message string) {
 	if err != nil {
-		panic("Somethings went wrong when proxy started...")
+		panic(message)
 	}
 }
