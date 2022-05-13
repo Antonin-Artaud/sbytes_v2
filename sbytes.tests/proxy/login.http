@@ -1,9 +1,10 @@
 # curl -d '{"key1":"value1", "key2":"value2"}' -H "Content-Type: application/json" -X POST --location "http://localhost:8080/auth/login"
-POST http://localhost:8080/auth/login
+POST http://localhost:8080/auth
 Content-Type: application/json
 
 {
-  "FireBaseId" : "1234",
+  "fireBaseId" : "1234",
+  "target" : "/api/auth/login",
   "url" : "google.com",
   "credential" : {
     "id": "antonin.artaud.aa@gmail.com",
