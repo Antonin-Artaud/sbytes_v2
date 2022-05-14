@@ -22,11 +22,11 @@ func main() {
 
 	ticketsController := server.Group("/tickets")
 	{
-		ticketsHandler := controllers.NewTicket()
+		ticketsHandler, _ := controllers.NewTicket()
 
 		ticketsController.POST("/", ticketsHandler.Create)
-		ticketsController.GET("/:ticket", ticketsHandler.ReadTicket)
-		ticketsController.PUT("/:ticket", ticketsHandler.UpdateTicket)
+		ticketsController.GET("/:uuid", ticketsHandler.ReadTicket)
+		ticketsController.PUT("/:uuid", ticketsHandler.UpdateTicket)
 	}
 
 	err := server.Run(port)
