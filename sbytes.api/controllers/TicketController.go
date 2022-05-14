@@ -11,12 +11,21 @@ const (
 	expirationDelay = 60 * time.Second
 )
 
-type Ticket struct {
-	Guid       uuid.UUID `json:"guid,omitempty"`
-	Expiration int64     `json:"expiration,omitempty"`
+type (
+	TicketController struct {
+	}
+
+	Ticket struct {
+		Guid       uuid.UUID `json:"guid,omitempty"`
+		Expiration int64     `json:"expiration,omitempty"`
+	}
+)
+
+func NewTicketController() *TicketController {
+	return &TicketController{}
 }
 
-func NewTicket() (*Ticket, error) {
+func (c *TicketController) NewTicket() (*Ticket, error) {
 	newUUID, err := uuid.NewUUID()
 
 	if err != nil {
@@ -29,12 +38,14 @@ func NewTicket() (*Ticket, error) {
 	}, nil
 }
 
-func (c *Ticket) Create(ctx *gin.Context) {
+func (c *TicketController) Create(ctx *gin.Context) {
 
-	ticket, err := NewTicket()
+	ticket, err := c.NewTicket()
 
 	if err != nil {
-		ctx.JSON(422, gin.H{"error": err.Error()})
+		ctx.JSON(422, gin.H{
+			"error": err.Error(),
+		})
 	}
 
 	ctx.JSON(201, gin.H{
@@ -43,10 +54,28 @@ func (c *Ticket) Create(ctx *gin.Context) {
 
 }
 
-func (c *Ticket) ReadTicket(ctx *gin.Context) {
+func (c *TicketController) ReadTicket(ctx *gin.Context) {
+	ticket := &Ticket{}
+	err := ctx.BindJSON(&ticket)
+
+	if err != nil {
+		ctx.JSON(400, gin.H{
+			"error": errors.New("something went wrong when the ticket tried to be read"),
+		})
+	}
+
+	if ticket.Expiration > time.Now().UTC().Unix() {
+		ctx.JSON(410, gin.H{
+			"error": errors.New("your ticket is expired, please create a new one"),
+		})
+	}
+
+	ctx.JSON(200, gin.H{
+		"ticket": &ticket,
+	})
 
 }
 
-func (c *Ticket) UpdateTicket(ctx *gin.Context) {
+func (c *TicketController) UpdateTicket(ctx *gin.Context) {
 
 }

@@ -15,6 +15,7 @@ func main() {
 
 	qrCodeController := server.Group("/qrCodes")
 	{
+		/// TODO : refactoring this controller
 		qrCode := controllers.NewQrCode()
 
 		qrCodeController.GET("/", qrCode.CreateQrCode)
@@ -22,7 +23,7 @@ func main() {
 
 	ticketsController := server.Group("/tickets")
 	{
-		ticketsHandler, _ := controllers.NewTicket()
+		ticketsHandler := controllers.NewTicketController()
 
 		ticketsController.POST("/", ticketsHandler.Create)
 		ticketsController.GET("/:uuid", ticketsHandler.ReadTicket)
