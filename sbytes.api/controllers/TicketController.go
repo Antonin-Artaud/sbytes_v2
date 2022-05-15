@@ -4,6 +4,8 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"go.mongodb.org/mongo-driver/bson"
+	"sbytes.api/services"
 	"time"
 )
 
@@ -16,8 +18,8 @@ type (
 	}
 
 	Ticket struct {
-		Guid       uuid.UUID `json:"guid,omitempty"`
-		Expiration int64     `json:"expiration,omitempty"`
+		Uuid       string `json:"guid,omitempty" bson:"guid,omitempty"`
+		Expiration int64  `json:"expiration,omitempty" bson:"expiration,omitempty"`
 	}
 )
 
@@ -33,7 +35,7 @@ func (c *TicketController) NewTicket() (*Ticket, error) {
 	}
 
 	return &Ticket{
-		Guid:       newUUID,
+		Uuid:       newUUID.String(),
 		Expiration: time.Now().UTC().Add(expirationDelay).Unix(),
 	}, nil
 }
@@ -42,10 +44,18 @@ func (c *TicketController) Create(ctx *gin.Context) {
 
 	ticket, err := c.NewTicket()
 
+	doc := bson.D{{"ticket", ticket}}
+
+	insertTicket := services.GetInstance().MongoDb.InsertTicket(doc)
+	if err != nil {
+		print(err)
+	}
+
 	if err != nil {
 		ctx.JSON(422, gin.H{
 			"error": err.Error(),
 		})
+		return
 	}
 
 	ctx.JSON(201, gin.H{
@@ -55,25 +65,19 @@ func (c *TicketController) Create(ctx *gin.Context) {
 }
 
 func (c *TicketController) ReadTicket(ctx *gin.Context) {
-	ticket := &Ticket{}
-	err := ctx.BindJSON(&ticket)
+	guid := ctx.Param("uuid")
+	ticket := services.GetInstance().MongoDb.FindTicket(guid)
 
-	if err != nil {
-		ctx.JSON(400, gin.H{
-			"error": errors.New("something went wrong when the ticket tried to be read"),
+	if ticket == nil {
+		ctx.JSON(404, gin.H{
+			"error": "Ticket not found",
 		})
-	}
-
-	if ticket.Expiration > time.Now().UTC().Unix() {
-		ctx.JSON(410, gin.H{
-			"error": errors.New("your ticket is expired, please create a new one"),
-		})
+		return
 	}
 
 	ctx.JSON(200, gin.H{
-		"ticket": &ticket,
+		"ticket": ticket["ticket"],
 	})
-
 }
 
 func (c *TicketController) UpdateTicket(ctx *gin.Context) {
