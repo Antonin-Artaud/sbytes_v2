@@ -49,18 +49,14 @@ func connectToCluster() (*mongo.Client, error) {
 	return client, nil
 }
 
-func (receiver *MongoService) InsertTicket(document bson.D) (bson.D, error) {
+func (receiver *MongoService) InsertTicket(document bson.D) error {
 	_, err := receiver.collection.InsertOne(context.Background(), document)
 
 	if err != nil {
-		return bson.D{{
-			"error", err.Error(),
-		}}, err
+		return err
 	}
 
-	return bson.D{{
-		"status", "document successfully inserted",
-	}}, nil
+	return nil
 }
 
 func (receiver *MongoService) UpdateTicket(ticketId uuid.UUID) {

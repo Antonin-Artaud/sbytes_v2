@@ -20,18 +20,23 @@ func GetInstance() *singleton {
 		defer lock.Unlock()
 
 		if instance == nil {
-
-			mongoClient, err := NewMongoService()
-
-			if err != nil {
-				log.Fatalln(err)
-			}
-
 			instance = &singleton{
-				MongoDb: mongoClient,
+				MongoDb: nil,
 			}
 		}
 	}
 
 	return instance
+}
+
+func (receiver *singleton) InitiateDbConnection() {
+	mongoClient, err := NewMongoService()
+
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	instance = &singleton{
+		MongoDb: mongoClient,
+	}
 }

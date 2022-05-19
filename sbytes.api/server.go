@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"sbytes.api/controllers"
+	"sbytes.api/services"
 )
 
 const (
@@ -12,6 +13,7 @@ const (
 func main() {
 
 	server := gin.Default()
+	services.GetInstance().InitiateDbConnection()
 
 	qrCodeController := server.Group("/qrCodes")
 	{

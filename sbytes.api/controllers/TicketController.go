@@ -46,9 +46,16 @@ func (c *TicketController) Create(ctx *gin.Context) {
 
 	doc := bson.D{{"ticket", ticket}}
 
-	insertTicket := services.GetInstance().MongoDb.InsertTicket(doc)
 	if err != nil {
-		print(err)
+		ctx.JSON(422, err.Error())
+		return
+	}
+
+	err = services.GetInstance().MongoDb.InsertTicket(doc)
+
+	if err != nil {
+		ctx.JSON(422, err.Error())
+		return
 	}
 
 	if err != nil {
@@ -61,7 +68,6 @@ func (c *TicketController) Create(ctx *gin.Context) {
 	ctx.JSON(201, gin.H{
 		"ticket": &ticket,
 	})
-
 }
 
 func (c *TicketController) ReadTicket(ctx *gin.Context) {
@@ -76,7 +82,7 @@ func (c *TicketController) ReadTicket(ctx *gin.Context) {
 	}
 
 	ctx.JSON(200, gin.H{
-		"ticket": ticket["ticket"],
+		"ticket": ticket[1],
 	})
 }
 
