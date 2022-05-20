@@ -4,7 +4,7 @@ import "time"
 
 type (
 	CreateTicketResponse struct {
-		TicketGuid string        `json:"TicketGuid"`
+		TicketGuid interface{}   `json:"TicketGuid"`
 		Timeout    time.Duration `json:"Timeout"`
 	}
 

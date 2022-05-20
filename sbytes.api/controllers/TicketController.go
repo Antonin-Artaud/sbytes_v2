@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 	"sbytes.api/requests"
 	"sbytes.api/responses"
@@ -19,8 +18,7 @@ type (
 	}
 
 	Ticket struct {
-		Uuid       string `json:"guid" bson:"guid"`
-		Expiration int64  `json:"expiration" bson:"expiration"`
+		Expiration int64 `json:"expiration" bson:"expiration"`
 	}
 )
 
@@ -28,17 +26,10 @@ func NewTicketController() *TicketController {
 	return &TicketController{}
 }
 
-func (receiver *TicketController) NewTicket() (*Ticket, error) {
-	newUUID, err := uuid.NewUUID()
-
-	if err != nil {
-		return nil, err
-	}
-
+func (receiver *TicketController) NewTicket() *Ticket {
 	return &Ticket{
-		Uuid:       newUUID.String(),
 		Expiration: time.Now().UTC().Add(expirationDelay).Unix(),
-	}, nil
+	}
 }
 
 func (receiver *TicketController) Create(ctx *gin.Context) {
@@ -49,28 +40,20 @@ func (receiver *TicketController) Create(ctx *gin.Context) {
 		return
 	}
 
-	ticket, err := receiver.NewTicket()
+	ticket := receiver.NewTicket()
 
-	if err != nil {
+	bsonElement := bson.M{"expiration": ticket.Expiration}
+
+	if insertedObjectId, err := services.GetInstance().MongoDb.InsertTicket(bsonElement); err != nil {
 		receiver.sendHttpResponse(ctx, 500, gin.H{"error": err.Error()})
-		return
+	} else {
+		response := &responses.CreateTicketResponse{
+			TicketGuid: insertedObjectId,
+			Timeout:    60 * time.Second,
+		}
+
+		receiver.sendHttpResponse(ctx, 201, response)
 	}
-
-	var bsonDocument bson.D
-
-	bsonDocument = bson.D{{"ticket", ticket}}
-
-	if err := services.GetInstance().MongoDb.InsertTicket(bsonDocument); err != nil {
-		receiver.sendHttpResponse(ctx, 500, gin.H{"error": err.Error()})
-		return
-	}
-
-	response := &responses.CreateTicketResponse{
-		TicketGuid: ticket.Uuid,
-		Timeout:    60 * time.Second,
-	}
-
-	receiver.sendHttpResponse(ctx, 201, gin.H{"response": response})
 }
 
 func (receiver *TicketController) ReadTicket(ctx *gin.Context) {

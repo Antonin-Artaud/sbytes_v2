@@ -44,14 +44,14 @@ func connectToCluster() (*mongo.Client, error) {
 	return client, nil
 }
 
-func (receiver *MongoService) InsertTicket(document bson.D) error {
-	_, err := receiver.collection.InsertOne(context.Background(), document)
+func (receiver *MongoService) InsertTicket(document bson.M) (interface{}, error) {
+	documentInserted, err := receiver.collection.InsertOne(context.Background(), document)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return documentInserted.InsertedID, nil
 }
 
 func (receiver *MongoService) UpdateTicket(ticketId uuid.UUID) {
@@ -60,29 +60,26 @@ func (receiver *MongoService) UpdateTicket(ticketId uuid.UUID) {
 	print(singleResult)
 }
 
-func (receiver *MongoService) FindTicket(ticketId string) bson.D {
-	filterCursor, err := receiver.collection.Find(context.Background(), bson.D{{"ticket.guid", ticketId}})
+func (receiver *MongoService) FindTicket(ticketId string) bson.E {
+	filterCursor, err := receiver.collection.Find(context.Background(), bson.E{Key: "_id", Value: ticketId})
 
 	if err != nil {
-		return bson.D{{
-			"error", err.Error(),
-		}}
+		return bson.E{
+			Key: "error", Value: err.Error(),
+		}
 	}
 
-	var document bson.D
+	var document bson.E
 
 	for filterCursor.Next(context.Background()) {
 		err := filterCursor.Decode(&document)
 
 		if err != nil {
-			return bson.D{{
-				"error", err.Error(),
-			}}
+			return bson.E{
+				Key: "error", Value: err.Error(),
+			}
 		}
 	}
+
 	return document
-}
-
-func (receiver *MongoService) RemoveTicket(ticketId uuid.UUID) {
-
 }
