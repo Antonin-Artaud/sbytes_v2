@@ -58,18 +58,14 @@ func (receiver *TicketController) Create(ctx *gin.Context) {
 
 func (receiver *TicketController) ReadTicket(ctx *gin.Context) {
 	guid := ctx.Param("uuid")
-	ticket := services.GetInstance().MongoDb.FindTicket(guid)
+	ticket, err := services.GetInstance().MongoDb.FindTicket(guid)
 
-	if ticket == nil {
-		ctx.JSON(404, gin.H{
-			"error": "Ticket not found",
-		})
+	if err != nil {
+		receiver.sendHttpResponse(ctx, 500, gin.H{"error": err.Error()})
 		return
 	}
 
-	ctx.JSON(200, gin.H{
-		"ticket": ticket[1],
-	})
+	receiver.sendHttpResponse(ctx, 200, ticket)
 }
 
 func (receiver *TicketController) UpdateTicket(ctx *gin.Context) {

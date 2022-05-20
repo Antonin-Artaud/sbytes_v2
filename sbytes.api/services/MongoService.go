@@ -2,8 +2,8 @@ package services
 
 import (
 	"context"
-	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"os"
@@ -54,32 +54,29 @@ func (receiver *MongoService) InsertTicket(document bson.M) (interface{}, error)
 	return documentInserted.InsertedID, nil
 }
 
-func (receiver *MongoService) UpdateTicket(ticketId uuid.UUID) {
-	singleResult := receiver.collection.FindOne(context.Background(), bson.D{{"ticket", bson.D{{"id", ticketId}}}})
-
-	print(singleResult)
-}
-
-func (receiver *MongoService) FindTicket(ticketId string) bson.E {
-	filterCursor, err := receiver.collection.Find(context.Background(), bson.E{Key: "_id", Value: ticketId})
+func (receiver *MongoService) UpdateTicket(ticketId string, document bson.D) error {
+	err := receiver.collection.FindOneAndUpdate(
+		context.Background(),
+		bson.M{"_id": ticketId},
+		bson.M{"$set": document},
+	).Decode(&document)
 
 	if err != nil {
-		return bson.E{
-			Key: "error", Value: err.Error(),
-		}
+		return err
 	}
 
-	var document bson.E
+	return nil
+}
 
-	for filterCursor.Next(context.Background()) {
-		err := filterCursor.Decode(&document)
+func (receiver *MongoService) FindTicket(ticketId string) (bson.M, error) {
+	var document bson.M
+	objectId, _ := primitive.ObjectIDFromHex(ticketId)
 
-		if err != nil {
-			return bson.E{
-				Key: "error", Value: err.Error(),
-			}
-		}
+	err := receiver.collection.FindOne(context.Background(), bson.M{"_id": objectId}).Decode(&document)
+
+	if err != nil {
+		return bson.M{}, err
 	}
 
-	return document
+	return document, nil
 }
