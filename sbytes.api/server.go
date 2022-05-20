@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"sbytes.api/controllers"
 	"sbytes.api/services"
 )
@@ -11,19 +12,16 @@ const (
 )
 
 func main() {
+	loadEnv()
 
 	server := gin.Default()
-	services.GetInstance().InitiateDbConnection()
+	err := services.GetInstance().InitiateDbConnection()
 
-	qrCodeController := server.Group("/qrCodes")
-	{
-		/// TODO : refactoring this controller
-		qrCode := controllers.NewQrCode()
-
-		qrCodeController.GET("/", qrCode.CreateQrCode)
+	if err != nil {
+		panic(err.Error())
 	}
 
-	ticketsController := server.Group("/tickets")
+	ticketsController := server.Group("/ticket")
 	{
 		ticketsHandler := controllers.NewTicketController()
 
@@ -32,12 +30,16 @@ func main() {
 		ticketsController.PUT("/:uuid", ticketsHandler.UpdateTicket)
 	}
 
-	err := server.Run(port)
+	err = server.Run(port)
 
-	tryToHandleError(err)
+	if err != nil {
+		panic(err.Error())
+	}
 }
 
-func tryToHandleError(err error) {
+func loadEnv() {
+	err := godotenv.Load(".env")
+
 	if err != nil {
 		panic(err.Error())
 	}

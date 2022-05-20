@@ -1,10 +1,11 @@
 package controllers
 
 import (
-	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
+	"sbytes.api/requests"
+	"sbytes.api/responses"
 	"sbytes.api/services"
 	"time"
 )
@@ -18,8 +19,8 @@ type (
 	}
 
 	Ticket struct {
-		Uuid       string `json:"guid,omitempty" bson:"guid,omitempty"`
-		Expiration int64  `json:"expiration,omitempty" bson:"expiration,omitempty"`
+		Uuid       string `json:"guid" bson:"guid"`
+		Expiration int64  `json:"expiration" bson:"expiration"`
 	}
 )
 
@@ -27,11 +28,11 @@ func NewTicketController() *TicketController {
 	return &TicketController{}
 }
 
-func (c *TicketController) NewTicket() (*Ticket, error) {
+func (receiver *TicketController) NewTicket() (*Ticket, error) {
 	newUUID, err := uuid.NewUUID()
 
 	if err != nil {
-		return nil, errors.New("somethings went wrong when the ticket tried to be created")
+		return nil, err
 	}
 
 	return &Ticket{
@@ -40,37 +41,39 @@ func (c *TicketController) NewTicket() (*Ticket, error) {
 	}, nil
 }
 
-func (c *TicketController) Create(ctx *gin.Context) {
+func (receiver *TicketController) Create(ctx *gin.Context) {
+	var req requests.WebsiteCredentialsRequest
 
-	ticket, err := c.NewTicket()
-
-	doc := bson.D{{"ticket", ticket}}
-
-	if err != nil {
-		ctx.JSON(422, err.Error())
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		receiver.sendHttpResponse(ctx, 500, gin.H{"error": err.Error()})
 		return
 	}
 
-	err = services.GetInstance().MongoDb.InsertTicket(doc)
+	ticket, err := receiver.NewTicket()
 
 	if err != nil {
-		ctx.JSON(422, err.Error())
+		receiver.sendHttpResponse(ctx, 500, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err != nil {
-		ctx.JSON(422, gin.H{
-			"error": err.Error(),
-		})
+	var bsonDocument bson.D
+
+	bsonDocument = bson.D{{"ticket", ticket}}
+
+	if err := services.GetInstance().MongoDb.InsertTicket(bsonDocument); err != nil {
+		receiver.sendHttpResponse(ctx, 500, gin.H{"error": err.Error()})
 		return
 	}
 
-	ctx.JSON(201, gin.H{
-		"ticket": &ticket,
-	})
+	response := &responses.CreateTicketResponse{
+		TicketGuid: ticket.Uuid,
+		Timeout:    60 * time.Second,
+	}
+
+	receiver.sendHttpResponse(ctx, 201, gin.H{"response": response})
 }
 
-func (c *TicketController) ReadTicket(ctx *gin.Context) {
+func (receiver *TicketController) ReadTicket(ctx *gin.Context) {
 	guid := ctx.Param("uuid")
 	ticket := services.GetInstance().MongoDb.FindTicket(guid)
 
@@ -86,6 +89,10 @@ func (c *TicketController) ReadTicket(ctx *gin.Context) {
 	})
 }
 
-func (c *TicketController) UpdateTicket(ctx *gin.Context) {
+func (receiver *TicketController) UpdateTicket(ctx *gin.Context) {
 
+}
+
+func (receiver *TicketController) sendHttpResponse(ctx *gin.Context, statusCode int, data interface{}) {
+	ctx.JSON(statusCode, data)
 }

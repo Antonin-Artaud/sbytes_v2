@@ -6,12 +6,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-)
-
-const (
-	database   = "sbytes"
-	collection = "tickets"
-	mongoDbUri = "mongodb://localhost:27017"
+	"os"
 )
 
 type MongoService struct {
@@ -29,12 +24,12 @@ func NewMongoService() (*MongoService, error) {
 
 	return &MongoService{
 		client:     client,
-		collection: client.Database(database).Collection(collection),
+		collection: client.Database(os.Getenv("DB_DATABASE")).Collection(os.Getenv("DB_COLLECTION")),
 	}, nil
 }
 
 func connectToCluster() (*mongo.Client, error) {
-	client, err := mongo.NewClient(options.Client().ApplyURI(mongoDbUri))
+	client, err := mongo.NewClient(options.Client().ApplyURI(os.Getenv("DB_HOST")))
 
 	if err != nil {
 		return nil, err

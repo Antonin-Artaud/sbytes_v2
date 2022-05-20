@@ -1,7 +1,6 @@
 package services
 
 import (
-	"log"
 	"sync"
 )
 
@@ -29,14 +28,16 @@ func GetInstance() *singleton {
 	return instance
 }
 
-func (receiver *singleton) InitiateDbConnection() {
+func (receiver *singleton) InitiateDbConnection() error {
 	mongoClient, err := NewMongoService()
 
 	if err != nil {
-		log.Fatalln(err)
+		return err
 	}
 
 	instance = &singleton{
 		MongoDb: mongoClient,
 	}
+
+	return nil
 }
