@@ -6,20 +6,20 @@ import (
 
 var (
 	lock     = &sync.Mutex{}
-	instance *singleton
+	instance *baseService
 )
 
-type singleton struct {
+type baseService struct {
 	MongoDb *MongoService
 }
 
-func GetService() *singleton {
+func GetService() *baseService {
 	if instance == nil {
 		lock.Lock()
 		defer lock.Unlock()
 
 		if instance == nil {
-			instance = &singleton{
+			instance = &baseService{
 				MongoDb: nil,
 			}
 		}
@@ -28,14 +28,15 @@ func GetService() *singleton {
 	return instance
 }
 
-func (receiver *singleton) InitiateDbConnection() error {
-	mongoClient, err := NewMongoService()
+func (receiver *baseService) InitiateDbConnection() error {
+	var mongoClient *MongoService
+	var err error
 
-	if err != nil {
+	if mongoClient, err = NewMongoService(); err != nil {
 		return err
 	}
 
-	instance = &singleton{
+	instance = &baseService{
 		MongoDb: mongoClient,
 	}
 

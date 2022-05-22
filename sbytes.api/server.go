@@ -9,10 +9,6 @@ import (
 	"sbytes.api/services"
 )
 
-const (
-	port = ":8080"
-)
-
 func main() {
 
 	if err := godotenv.Load(".env"); err != nil {
@@ -40,7 +36,7 @@ func main() {
 		ticketsController.PUT("/:uuid", ticketsHandler.UpdateTicket)
 	}
 
-	if err := server.Run(port); err != nil {
+	if err := server.Run(os.Getenv("SERVER_PORT")); err != nil {
 		throwCriticalError(err)
 	}
 }

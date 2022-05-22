@@ -33,7 +33,7 @@ func (receiver *qrCodeImpl) Create(data string, qrcodeName string) string {
 	return ""
 }
 
-func (receiver *singleton) Delete(qrcodeName string) {
+func (receiver *baseService) Delete(qrcodeName string) {
 	err := os.Remove("./tempQrCodeService" + qrcodeName)
 	if err != nil {
 		return
