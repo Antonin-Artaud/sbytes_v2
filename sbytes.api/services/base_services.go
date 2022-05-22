@@ -13,7 +13,7 @@ type singleton struct {
 	MongoDb *MongoService
 }
 
-func GetInstance() *singleton {
+func GetService() *singleton {
 	if instance == nil {
 		lock.Lock()
 		defer lock.Unlock()

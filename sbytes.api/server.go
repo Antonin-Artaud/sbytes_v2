@@ -15,7 +15,7 @@ func main() {
 	loadEnv()
 
 	server := gin.Default()
-	err := services.GetInstance().InitiateDbConnection()
+	err := services.GetService().InitiateDbConnection()
 
 	if err != nil {
 		panic(err.Error())

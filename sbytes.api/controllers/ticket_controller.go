@@ -44,7 +44,7 @@ func (receiver *TicketController) Create(ctx *gin.Context) {
 
 	bsonElement := bson.M{"expiration": ticket.Expiration}
 
-	if insertedObjectId, err := services.GetInstance().MongoDb.InsertTicket(bsonElement); err != nil {
+	if insertedObjectId, err := services.GetService().MongoDb.InsertTicket(bsonElement); err != nil {
 		receiver.sendHttpResponse(ctx, 500, gin.H{"error": err.Error()})
 	} else {
 		response := &responses.CreateTicketResponse{
@@ -58,7 +58,7 @@ func (receiver *TicketController) Create(ctx *gin.Context) {
 
 func (receiver *TicketController) ReadTicket(ctx *gin.Context) {
 	guid := ctx.Param("uuid")
-	ticket, err := services.GetInstance().MongoDb.FindTicket(guid)
+	ticket, err := services.GetService().MongoDb.FindTicket(guid)
 
 	if err != nil {
 		receiver.sendHttpResponse(ctx, 500, gin.H{"error": err.Error()})
