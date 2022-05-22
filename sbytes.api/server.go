@@ -3,6 +3,8 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	"log"
+	"os"
 	"sbytes.api/controllers"
 	"sbytes.api/services"
 )
@@ -12,13 +14,21 @@ const (
 )
 
 func main() {
-	loadEnv()
+
+	if err := godotenv.Load(".env"); err != nil {
+		throwCriticalError(err)
+	}
+
+	setServerMode(os.Getenv("APP_ENV"))
 
 	server := gin.Default()
-	err := services.GetService().InitiateDbConnection()
 
-	if err != nil {
-		panic(err.Error())
+	if err := server.SetTrustedProxies([]string{os.Getenv("IP_TRUSTED")}); err != nil {
+		throwCriticalError(err)
+	}
+
+	if err := services.GetService().InitiateDbConnection(); err != nil {
+		throwCriticalError(err)
 	}
 
 	ticketsController := server.Group("/ticket")
@@ -30,17 +40,24 @@ func main() {
 		ticketsController.PUT("/:uuid", ticketsHandler.UpdateTicket)
 	}
 
-	err = server.Run(port)
-
-	if err != nil {
-		panic(err.Error())
+	if err := server.Run(port); err != nil {
+		throwCriticalError(err)
 	}
 }
 
-func loadEnv() {
-	err := godotenv.Load(".env")
-
-	if err != nil {
-		panic(err.Error())
+func setServerMode(mode string) {
+	switch mode {
+	case "DEV":
+		gin.SetMode(gin.DebugMode)
+		break
+	case "PROD":
+		gin.SetMode(gin.ReleaseMode)
+	default:
+		gin.SetMode(gin.DebugMode)
 	}
+}
+
+func throwCriticalError(err error) {
+	log.Println(err.Error())
+	return
 }

@@ -15,10 +15,10 @@ type MongoService struct {
 }
 
 func NewMongoService() (*MongoService, error) {
+	var client *mongo.Client
+	var err error
 
-	client, err := connectToCluster()
-
-	if err != nil {
+	if client, err = connectToCluster(); err != nil {
 		return nil, err
 	}
 
@@ -29,15 +29,14 @@ func NewMongoService() (*MongoService, error) {
 }
 
 func connectToCluster() (*mongo.Client, error) {
-	client, err := mongo.NewClient(options.Client().ApplyURI(os.Getenv("DB_HOST")))
+	var client *mongo.Client
+	var err error
 
-	if err != nil {
+	if client, err = mongo.NewClient(options.Client().ApplyURI(os.Getenv("DB_HOST"))); err != nil {
 		return nil, err
 	}
 
-	err = client.Connect(context.Background())
-
-	if err != nil {
+	if err = client.Connect(context.Background()); err != nil {
 		return nil, err
 	}
 
@@ -45,9 +44,10 @@ func connectToCluster() (*mongo.Client, error) {
 }
 
 func (receiver *MongoService) InsertTicket(document bson.M) (interface{}, error) {
-	documentInserted, err := receiver.collection.InsertOne(context.Background(), document)
+	var documentInserted *mongo.InsertOneResult
+	var err error
 
-	if err != nil {
+	if documentInserted, err = receiver.collection.InsertOne(context.Background(), document); err != nil {
 		return nil, err
 	}
 
@@ -55,13 +55,11 @@ func (receiver *MongoService) InsertTicket(document bson.M) (interface{}, error)
 }
 
 func (receiver *MongoService) UpdateTicket(ticketId string, document bson.D) error {
-	err := receiver.collection.FindOneAndUpdate(
-		context.Background(),
-		bson.M{"_id": ticketId},
-		bson.M{"$set": document},
-	).Decode(&document)
 
-	if err != nil {
+	filter := bson.M{"_id": ticketId}
+	update := bson.M{"$set": document}
+
+	if err := receiver.collection.FindOneAndUpdate(context.Background(), filter, update).Decode(&document); err != nil {
 		return err
 	}
 
@@ -72,9 +70,9 @@ func (receiver *MongoService) FindTicket(ticketId string) (bson.M, error) {
 	var document bson.M
 	objectId, _ := primitive.ObjectIDFromHex(ticketId)
 
-	err := receiver.collection.FindOne(context.Background(), bson.M{"_id": objectId}).Decode(&document)
+	filter := bson.M{"_id": objectId}
 
-	if err != nil {
+	if err := receiver.collection.FindOne(context.Background(), filter).Decode(&document); err != nil {
 		return bson.M{}, err
 	}
 
